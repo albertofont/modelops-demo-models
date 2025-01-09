@@ -76,6 +76,12 @@ def train(context: ModelContext, **kwargs):
          
     print("Starting training using teradata osml...")
 
+    print("=== TYPE random_state; ", type(context.hyperparams["random_state"])
+    print("=== TYPE max_leaf_nodes; ", type(context.hyperparams["max_leaf_nodes"])
+    print("=== TYPE max_features; ", type(context.hyperparams["max_features"])
+    print("=== TYPE max_depth; ", type(context.hyperparams["max_depth"])
+    
+    
     DT_classifier = osml.DecisionTreeClassifier(random_state=context.hyperparams["random_state"]
                                                 ,max_leaf_nodes=context.hyperparams["max_leaf_nodes"]
                                                 ,max_features=context.hyperparams["max_features"]
