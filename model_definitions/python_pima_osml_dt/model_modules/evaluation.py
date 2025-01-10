@@ -94,7 +94,6 @@ def evaluate(context: ModelContext, **kwargs):
 
     # Load the test data from Teradata
     test_df = DataFrame.from_query(context.dataset_info.sql)
-    
     X_test = test_df.drop(['HasDiabetes','PatientId'], axis = 1)
     y_test = test_df.select(["HasDiabetes"])
     # Scaling the test set
@@ -116,18 +115,17 @@ def evaluate(context: ModelContext, **kwargs):
    
     explainer_shap = shap.TreeExplainer(DT_classifier.modelObj)
     shap_values = explainer_shap.shap_values(X_test.to_pandas())
-    print("PLOT SHAP summary")
+    
     shap.summary_plot(shap_values, X_test.to_pandas(),show=False, plot_size=(12, 8), plot_type='bar')
     save_plot('SHAP Feature Importance', context=context)
     
-    print("PLOT SHAP beeswarm")
     
     explainer_ebm = shap.Explainer(DT_classifier.modelObj.predict, X_test.to_pandas())
     shap_values_ebm = explainer_ebm(X_test.to_pandas())
     
     shap.plots.beeswarm(shap_values_ebm,show=False, plot_size=(12,8))
     save_plot('SHAP Beeswarm Plot', context=context)
-    print("PLOTs saved")
+
     # Evaluate classification metrics using ClassificationEvaluator
     ClassificationEvaluator_obj = ClassificationEvaluator(
         data=predict_df,
@@ -172,24 +170,21 @@ def evaluate(context: ModelContext, **kwargs):
     )
     
     plot_roc_curve(predict_df.to_pandas(), f"{context.artifact_output_path}/roc_curve")
-    print("PLOT ROC saved")   
+    
     feature_importance = compute_feature_importance(DT_classifier.modelObj,X_test)
     plot_feature_importance(feature_importance, f"{context.artifact_output_path}/feature_importance")
-    print("PLOT Feature Imp saved")
+    
     
     predictions_table = "predictions_tmp"
     copy_to_sql(df=predict_df, table_name=predictions_table, index=False, if_exists="replace", temporary=True)
-    print("Predictions done")
     
-
+    
+    # calculate stats if training stats exist
     if os.path.exists(f"{context.artifact_input_path}/data_stats.json"):
-        print("INPUT path exists")
-        print(feature_importance)
-        print(dict(sorted(feature_importance.set_index('Feature')['Importance'].items(), key=lambda x: x[1], reverse=True)))
         record_evaluation_stats(
             features_df=test_df,
             predicted_df=DataFrame.from_query(f"SELECT * FROM {predictions_table}"),
-            feature_importance=dict(sorted(feature_importance.set_index('Feature')['Importance'].items(), key=lambda x: x[1], reverse=True)),
+            feature_importance=feature_importance,
             context=context
         )
 
